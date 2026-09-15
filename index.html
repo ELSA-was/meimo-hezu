@@ -45,7 +45,7 @@ html,body{height:100%;background:#0d0812;font-family:"Microsoft YaHei","PingFang
 /* 文本框 */
 #textbox{position:absolute;left:0;right:0;bottom:0;padding:12px 12px 14px;background:linear-gradient(180deg,rgba(13,8,18,0),rgba(13,8,18,.55) 30%,rgba(13,8,18,.92))}
 #dialog{position:relative;background:var(--panel);border:1px solid rgba(232,195,122,.3);border-radius:14px;padding:16px 18px 14px;min-height:132px;max-height:38vh;overflow-y:auto;box-shadow:0 -6px 30px rgba(0,0,0,.5);cursor:pointer}
-#whoTag{position:absolute;top:-16px;left:14px;display:flex;align-items:center;gap:8px}
+#whoTag{position:absolute;top:-4px;left:26px;display:flex;align-items:center;gap:8px;z-index:6}
 #whoFace{width:52px;height:52px;border-radius:50%;background-size:190% auto;background-position:50% 12%;border:2px solid var(--gold);box-shadow:0 3px 10px rgba(0,0,0,.6)}
 #whoName{background:linear-gradient(90deg,var(--rose-deep),var(--rose));color:#fff;font-size:15px;padding:4px 14px;border-radius:16px;letter-spacing:1px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 #whoName.narr{background:linear-gradient(90deg,#4c3a5e,#6b5480)}
@@ -123,8 +123,8 @@ html,body{height:100%;background:#0d0812;font-family:"Microsoft YaHei","PingFang
     <div id="favcol"></div>
     <div id="choices" style="display:none"></div>
     <div id="textbox">
+      <div id="whoTag"><div id="whoFace"></div><div id="whoName">旁白</div></div>
       <div id="dialog">
-        <div id="whoTag"><div id="whoFace"></div><div id="whoName">旁白</div></div>
         <div id="textBody"></div>
         <div id="hintNext">▼ 点击继续</div>
       </div>
