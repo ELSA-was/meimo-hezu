@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>毕业后合租，我的舍友都是魅魔？！</title>
+<style>
+:root{
+  --rose:#e8638c; --rose-deep:#b0355e; --gold:#e8c37a; --ink:#1a1220;
+  --panel:rgba(26,16,34,.88); --panel2:rgba(40,24,52,.92);
+  --txt:#f5ecf5; --dim:#b9a8c4; --ok:#7ecb8f;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0d0812;font-family:"Microsoft YaHei","PingFang SC",sans-serif;overflow:hidden}
+#stage{position:relative;width:100%;max-width:1100px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden;background:#000;user-select:none}
+/* ---------- 背景层 ---------- */
+#bgA,#bgB{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity 1.2s ease}
+#bgB{opacity:0}
+/* 立绘层 */
+#chara{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:82%;max-width:92%;z-index:3;opacity:0;transition:opacity .45s ease, transform .45s ease;pointer-events:none;filter:drop-shadow(0 8px 24px rgba(0,0,0,.55))}
+#chara.show{opacity:1}
+#chara img{height:100%;width:auto;max-width:none}
+/* 暗角与氛围光 */
+#vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(8,4,14,.55) 100%)}
+/* ---------- UI 层 ---------- */
+#ui{position:absolute;inset:0;z-index:5;transition:opacity .4s ease}
+#ui.hiddenUI{opacity:0;pointer-events:none}
+/* 顶部状态栏 */
+#topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(180deg,rgba(13,8,18,.92),rgba(13,8,18,0))}
+#monthchip{background:var(--panel2);border:1px solid rgba(232,195,122,.35);color:var(--gold);font-size:13px;padding:5px 12px;border-radius:20px;letter-spacing:1px;white-space:nowrap}
+#energywrap{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid rgba(232,99,140,.4);border-radius:20px;padding:4px 12px;font-size:12px;color:#ffb9cf}
+#energybar{width:90px;height:8px;background:rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
+#energyfill{height:100%;width:100%;background:linear-gradient(90deg,#e8638c,#ffb86c);border-radius:6px;transition:width .6s ease}
+#btnMenu{margin-left:auto;background:var(--panel2);border:1px solid rgba(255,255,255,.22);color:var(--txt);border-radius:20px;padding:5px 14px;font-size:13px;cursor:pointer}
+/* 好感度侧栏 */
+#favcol{position:absolute;right:10px;top:64px;display:flex;flex-direction:column;gap:7px;z-index:6}
+.favitem{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:3px 8px 3px 3px;cursor:pointer;transition:transform .2s}
+.favitem:active{transform:scale(.95)}
+.favface{width:34px;height:34px;border-radius:50%;background-size:cover;background-position:50% 8%;border:2px solid rgba(255,255,255,.35)}
+.favinfo{display:flex;flex-direction:column;gap:2px}
+.favname{font-size:11px;color:var(--txt)}
+.favbar{width:58px;height:5px;background:rgba(255,255,255,.14);border-radius:4px;overflow:hidden}
+.favfill{height:100%;background:linear-gradient(90deg,#e8638c,#ff9db8);border-radius:4px;transition:width .5s}
+.favitem.min{opacity:.45}
+/* 文本框 */
+#textbox{position:absolute;left:0;right:0;bottom:0;padding:12px 12px 14px;background:linear-gradient(180deg,rgba(13,8,18,0),rgba(13,8,18,.55) 30%,rgba(13,8,18,.92))}
+#dialog{position:relative;background:var(--panel);border:1px solid rgba(232,195,122,.3);border-radius:14px;padding:16px 18px 14px;min-height:132px;max-height:38vh;overflow-y:auto;box-shadow:0 -6px 30px rgba(0,0,0,.5);cursor:pointer}
+#whoTag{position:absolute;top:-16px;left:14px;display:flex;align-items:center;gap:8px}
+#whoFace{width:52px;height:52px;border-radius:50%;background-size:190% auto;background-position:50% 12%;border:2px solid var(--gold);box-shadow:0 3px 10px rgba(0,0,0,.6)}
+#whoName{background:linear-gradient(90deg,var(--rose-deep),var(--rose));color:#fff;font-size:15px;padding:4px 14px;border-radius:16px;letter-spacing:1px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+#whoName.narr{background:linear-gradient(90deg,#4c3a5e,#6b5480)}
+#textBody{color:var(--txt);font-size:15.5px;line-height:1.85;letter-spacing:.4px;text-shadow:0 1px 2px #000}
+#textBody .em{color:var(--gold)}
+#textBody .sc{color:#ffb0c8}
+#hintNext{position:absolute;right:14px;bottom:8px;color:var(--gold);font-size:12px;opacity:.85;animation:bob 1.2s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+/* 选项 */
+#choices{position:absolute;left:0;right:0;bottom:0;padding:0 16px 20px;display:flex;flex-direction:column;gap:10px;align-items:center;z-index:7}
+.choiceBtn{width:100%;max-width:640px;background:linear-gradient(135deg,rgba(58,32,72,.95),rgba(38,20,50,.95));border:1px solid rgba(232,195,122,.45);color:var(--txt);font-size:15px;line-height:1.5;padding:13px 18px;border-radius:12px;cursor:pointer;transition:all .2s;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.choiceBtn:hover{border-color:var(--gold);transform:translateY(-2px);background:linear-gradient(135deg,rgba(80,42,96,.98),rgba(50,26,64,.98))}
+.choiceBtn .no{color:var(--gold);margin-right:8px}
+/* 自定义输入 */
+#customBox{display:none;width:100%;max-width:640px;background:var(--panel2);border:1px solid rgba(232,195,122,.45);border-radius:12px;padding:10px;gap:8px}
+#customBox.show{display:flex}
+#customInput{flex:1;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:var(--txt);font-size:14px;padding:8px 10px;outline:none}
+#customSend{background:var(--rose-deep);border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:14px}
+/* 遮罩面板（菜单/结局/存档/R18门/设置） */
+#overlay{position:absolute;inset:0;z-index:20;background:rgba(8,4,14,.86);display:none;align-items:center;justify-content:center;padding:20px}
+#overlay.show{display:flex}
+.panel{background:linear-gradient(160deg,#2a1838,#180f22);border:1px solid rgba(232,195,122,.4);border-radius:18px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;padding:26px 24px;color:var(--txt)}
+.panel h2{color:var(--gold);font-size:19px;margin-bottom:14px;letter-spacing:2px;text-align:center}
+.panel .desc{font-size:14px;line-height:1.9;color:var(--dim)}
+.panel .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;justify-content:center}
+.panel button{background:linear-gradient(135deg,var(--rose-deep),var(--rose));border:none;color:#fff;font-size:15px;padding:10px 22px;border-radius:10px;cursor:pointer;letter-spacing:1px}
+.panel button.ghost{background:transparent;border:1px solid rgba(255,255,255,.35)}
+.panel button:active{transform:scale(.96)}
+/* 标题页 */
+#title{position:absolute;inset:0;z-index:15;background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#title .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,6,16,.25),rgba(10,6,16,.82))}
+#title .inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px}
+#title .series{color:#ffb9cf;font-size:13px;letter-spacing:4px;text-shadow:0 2px 6px #000}
+#title h1{font-size:clamp(26px,6vw,44px);color:#fff;letter-spacing:2px;text-shadow:0 0 18px rgba(232,99,140,.8),0 4px 10px #000;line-height:1.4}
+#title h1 .hot{color:#ffd98a}
+#title .sub{color:var(--dim);font-size:13.5px;letter-spacing:2px;text-shadow:0 2px 4px #000}
+#title .btns{display:flex;flex-direction:column;gap:12px;margin-top:22px;width:230px}
+#title .btns button{background:linear-gradient(135deg,rgba(176,53,94,.92),rgba(232,99,140,.92));border:1px solid rgba(255,217,138,.5);color:#fff;font-size:16px;letter-spacing:3px;padding:12px;border-radius:26px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#title .btns button.ghost{background:rgba(20,10,28,.7)}
+#ageGate{position:absolute;inset:0;z-index:30;background:rgba(5,2,8,.94);display:none;align-items:center;justify-content:center;padding:20px;text-align:center}
+#ageGate.show{display:flex}
+/* 结局卡 */
+.endcard{text-align:center}
+.endcard .etype{font-size:13px;letter-spacing:4px;color:var(--dim)}
+.endcard .ename{font-size:26px;color:var(--gold);margin:10px 0;letter-spacing:3px}
+.endcard .eno{font-size:12px;color:var(--rose);letter-spacing:2px}
+/* toast */
+#toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid rgba(232,195,122,.5);color:var(--gold);padding:8px 18px;border-radius:20px;font-size:13px;z-index:40;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+/* 历史记录 */
+#histList{max-height:52vh;overflow-y:auto;font-size:13.5px;line-height:1.8}
+#histList .h-who{color:var(--gold)}
+#histList .h-item{margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed rgba(255,255,255,.12)}
+@media (max-width:520px){
+  #textBody{font-size:14px}
+  .favname{display:none}
+  .favbar{width:44px}
+  #chara{height:70%}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bgA"></div><div id="bgB"></div>
+  <div id="chara"><img id="charaImg" alt=""></div>
+  <div id="vignette"></div>
+
+  <div id="ui">
+    <div id="topbar">
+      <div id="monthchip">序章</div>
+      <div id="energywrap">💗能量<div id="energybar"><div id="energyfill"></div></div><span id="energyNum">100</span></div>
+      <button id="btnMusic">🎵 音乐</button>
+      <button id="btnMenu">☰ 菜单</button>
+    </div>
+    <div id="favcol"></div>
+    <div id="choices" style="display:none"></div>
+    <div id="textbox">
+      <div id="dialog">
+        <div id="whoTag"><div id="whoFace"></div><div id="whoName">旁白</div></div>
+        <div id="textBody"></div>
+        <div id="hintNext">▼ 点击继续</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay"><div class="panel" id="overlayPanel"></div></div>
+
+  <div id="title">
+    <div class="shade"></div>
+    <div class="inner">
+      <div class="series">万人迷恋爱修罗场 · 女性向BG · R18</div>
+      <h1>毕业后合租，<br>我的舍友都是<span class="hot">魅魔</span>？！</h1>
+      <div class="sub">—— 五只魅魔 · 一间合租屋 · 十四种结局 ——</div>
+      <div class="btns">
+        <button id="btnNew">新的开始</button>
+        <button id="btnCont" class="ghost">继续游戏</button>
+        <button id="btnEnds" class="ghost">结局图鉴</button>
+        <button id="btnAbout" class="ghost">作品说明</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ageGate">
+    <div class="panel">
+      <h2>🔞 成人内容提示</h2>
+      <div class="desc">本作品包含成人向（R18）剧情、恋爱修罗场与亲密描写，仅限 <b style="color:var(--gold)">18 岁以上</b> 玩家游玩。<br><br>所有角色均为虚构成年人物，剧情纯属虚构，请勿与现实混淆。</div>
+      <div class="btnrow">
+        <button id="ageYes">我已满18岁，进入</button>
+        <button id="ageNo" class="ghost">离开</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script src="js/chars.js"></script>
+<script src="js/common.js"></script>
+<script src="js/routes.js"></script>
+<script src="js/endings.js"></script>
+<script>
+/* ===================== 引擎 ===================== */
+const $=s=>document.querySelector(s);
+const stage=$('#stage');
+const G={
+  node:'start', month:'序章', energy:100,
+  fav:{jqn:10, zy:10, wx:5, syb:5, ly:5},
+  flags:{}, hist:[], seenEnds:JSON.parse(localStorage.getItem('seenEnds')||'[]'),
+  r18ok:false, hideUI:false
+};
+
+function save(){
+  localStorage.setItem('save1',JSON.stringify({node:G.node,month:G.month,energy:G.energy,fav:G.fav,flags:G.flags,hist:G.hist.slice(-60),r18ok:G.r18ok}));
+}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600);}
+
+/* ---------- 背景切换（自动淡入淡出） ---------- */
+let curBg='', bgFlip=false;
+function setBg(key,instant){
+  const url=BG[key]||BG.black;
+  if(url===curBg)return;
+  curBg=url;
+  const show=bgFlip?$('#bgA'):$('#bgB'), hide=bgFlip?$('#bgB'):$('#bgA');
+  bgFlip=!bgFlip;
+  show.style.backgroundImage=`url(${url})`;
+  if(instant){show.style.opacity=1;hide.style.opacity=0;}
+  else{show.style.opacity=1;hide.style.opacity=0;}
+}
+
+/* ---------- 立绘 ---------- */
+let curChara=null;
+function setChara(cid){
+  if(!cid||cid==='none'){ $('#chara').classList.remove('show'); curChara=null; return; }
+  if(cid===curChara)return;
+  curChara=cid;
+  const c=CHARS[cid];
+  const img=$('#charaImg');
+  img.style.opacity=0;
+  setTimeout(()=>{ img.src=c.img; img.onload=()=>{img.style.opacity=1;}; $('#chara').classList.add('show'); },180);
+}
+/* 人类形态（无角尾）备用：通过 CSS 滤镜弱化特征不做，立绘即魅魔形态 */
+
+/* ---------- 文本渲染 ---------- */
+function fmtText(t){
+  return t.replace(/\n/g,'<br>')
+    .replace(/【(.+?)】/g,'<span class="em">【$1】</span>')
+    .replace(/\{\{(.+?)\}\}/g,'<span class="sc">$1</span>');
+}
+function typeWriter(el,html){ el.innerHTML=html; }
+
+/* ---------- 好感度侧栏 ---------- */
+function renderFav(){
+  const col=$('#favcol'); col.innerHTML='';
+  for(const id of ['jqn','zy','wx','syb','ly']){
+    const c=CHARS[id], v=G.fav[id]||0;
+    const d=document.createElement('div'); d.className='favitem'+(v<=0?' min':'');
+    d.innerHTML=`<div class="favface" style="background-image:url(${c.img})"></div>
+      <div class="favinfo"><div class="favname">${c.name} ${v>=60?'♥':''}</div>
+      <div class="favbar"><div class="favfill" style="width:${Math.max(0,Math.min(100,v))}%"></div></div></div>`;
+    d.onclick=()=>{ openOverlay(`<h2>${c.name}</h2><div class="desc" style="text-align:center"><img src="${c.img}" style="height:200px;filter:drop-shadow(0 4px 12px #000)"><br><br>${c.intro}<br><br>好感度：<b style="color:var(--rose)">${v}</b> / 100<br>称呼：${c.title}<br>魅力特征：${c.trait}</div><div class="btnrow"><button onclick="closeOverlay()">关闭</button></div>`); };
+    col.appendChild(d);
+  }
+}
+function renderEnergy(){
+  $('#energyfill').style.width=Math.max(0,Math.min(100,G.energy))+'%';
+  $('#energyNum').textContent=Math.round(G.energy);
+}
+
+/* ---------- 节点执行 ---------- */
+let typing=false;
+function go(id){
+  const n=NODES[id];
+  if(!n){ console.error('missing node',id); toast('剧情节点缺失：'+id); return; }
+  G.node=id;
+  if(n.month||n.type==='month'){ G.month=n.month||n.text; }
+  $('#monthchip').textContent=G.month;
+  if(n.effects){
+    for(const k in n.effects){
+      if(k==='energy') G.energy=Math.max(0,Math.min(120,G.energy+n.effects[k]));
+      else if(G.fav[k]!==undefined) G.fav[k]=Math.max(0,Math.min(100,G.fav[k]+n.effects[k]));
+    }
+  }
+  if(n.set){ for(const k in n.set) G.flags[k]=n.set[k]; }
+  renderFav(); renderEnergy();
+  if(n.type==='titleback'){ showTitle(); return; }
+  if(n.type==='month'){ setBg(n.bg||'black'); setChara(null); showMonthCard(n); return; }
+  if(n.type==='branch'){ const to=n.pick(G); go(typeof to==='function'?to(G):to); return; }
+  if(n.type==='r18gate'){ showR18Gate(n); return; }
+  if(n.type==='ending'){ showEnding(n); return; }
+  if(n.type==='summary'){ showSummary(n); return; }
+  if(n.type==='save'){ save(); go(n.next); return; }
+
+  /* 普通文本节点 */
+  if(n.bg) setBg(n.bg);
+  setChara(n.who||null);
+  const body=$('#textBody'), face=$('#whoFace'), name=$('#whoName');
+  if(n.who && CHARS[n.who]){
+    face.style.display=''; face.style.backgroundImage=`url(${CHARS[n.who].img})`;
+    name.textContent=CHARS[n.who].name; name.classList.remove('narr');
+  }else{
+    face.style.display='none';
+    name.textContent=n.whoName||'旁白'; name.classList.add('narr');
+  }
+  body.innerHTML=fmtText(n.text);
+  G.hist.push({who:n.who?CHARS[n.who].name:(n.whoName||'旁白'),t:n.text});
+  if(G.hist.length>200)G.hist.shift();
+  $('#choices').style.display='none';
+  $('#textbox').style.display='';
+  if(n.choices&&n.choices.length){ showChoices(n); }
+  else { $('#choices').innerHTML=''; }
+  typing=false;
+}
+
+function advance(){
+  if(typing)return;
+  const n=NODES[G.node];
+  if(!n||n.type) return;
+  if(n.choices&&n.choices.length)return; // 有选项时不推进
+  const to=typeof n.next==='function'?n.next(G):n.next;
+  if(to) go(to);
+}
+
+/* ---------- 选项 ---------- */
+function showChoices(n){
+  const box=$('#choices'); box.innerHTML='';
+  $('#hintNext').style.display='none';
+  n.choices.forEach((c,i)=>{
+    if(c.cond&&!c.cond(G))return;
+    const b=document.createElement('button'); b.className='choiceBtn';
+    b.innerHTML=`<span class="no">${['①','②','③','④','⑤'][i]||'•'}</span>${c.t}${c.fx?`<span style="color:var(--gold);font-size:12px"> ${c.fx}</span>`:''}`;
+    b.onclick=(e)=>{ e.stopPropagation();
+      if(c.effects){ for(const k in c.effects){ if(k==='energy')G.energy=Math.max(0,Math.min(120,G.energy+c.effects[k])); else if(G.fav[k]!==undefined)G.fav[k]=Math.max(0,Math.min(100,G.fav[k]+c.effects[k])); } renderFav();renderEnergy(); }
+      if(c.set){ for(const k in c.set)G.flags[k]=c.set[k]; }
+      if(c.custom){ showCustomInput(n); return; }
+      go(typeof c.to==='function'?c.to(G):c.to);
+    };
+    box.appendChild(b);
+  });
+  /* ④自定义输入 */
+  if(n.allowCustom){
+    const b=document.createElement('button'); b.className='choiceBtn';
+    b.innerHTML=`<span class="no">④</span>✏️ 自由行动（输入你想做的事）`;
+    b.onclick=(e)=>{e.stopPropagation();showCustomInput(n);};
+    box.appendChild(b);
+  }
+  box.style.display='flex';
+  $('#textbox').style.display='none';
+}
+function showCustomInput(n){
+  const box=$('#choices');
+  let cb=$('#customBox');
+  if(!cb){ cb=document.createElement('div');cb.id='customBox';
+    cb.innerHTML=`<input id="customInput" placeholder="写下你的行动…（≤30字）"><button id="customSend">行动</button>`;
+    box.appendChild(cb); }
+  cb.classList.add('show');
+  $('#customInput').focus();
+  $('#customSend').onclick=(e)=>{e.stopPropagation();
+    const v=$('#customInput').value.trim().slice(0,30);
+    if(!v){toast('先写下你想做的事哦～');return;}
+    cb.classList.remove('show');
+    G.flags.lastCustom=v;
+    // 通用彩蛋回应
+    G.fav.jqn=Math.min(100,G.fav.jqn+1);G.fav.zy=Math.min(100,G.fav.zy+1);G.fav.wx=Math.min(100,G.fav.wx+1);G.fav.syb=Math.min(100,G.fav.syb+1);G.fav.ly=Math.min(100,G.fav.ly+1);
+    go('sys_custom');
+    NODES['sys_custom'].ret=n.customReturn||n.next||G.node;
+    NODES['sys_custom'].next=n.customReturn||n.next;
+  };
+}
+
+/* ---------- 月卡 ---------- */
+function showMonthCard(n){
+  const box=$('#choices');box.innerHTML='';box.style.display='none';
+  const p=$('#overlayPanel');
+  openOverlay(`<h2>${n.text}</h2><div class="desc" style="text-align:center">${n.sub||''}</div><div class="btnrow"><button onclick="closeOverlay();go('${n.next}')">开 始</button></div>`);
+}
+
+/* ---------- 月小结 ---------- */
+function showSummary(n){
+  setBg(n.bg||'black');setChara(null);
+  const f=G.fav;
+  const rank=Object.entries(f).sort((a,b)=>b[1]-a[1]);
+  const top=rank[0][0];
+  const names={jqn:'江祈年',zy:'陆知遥',wx:'温叙',syb:'沈聿白',ly:'黎野'};
+  openOverlay(`<h2>${n.text||'本月小结'}</h2><div class="desc">
+  ❤️ 好感度排行：<br>
+  ${rank.map(([k,v],i)=>`${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${names[k]}：${v}（${v>=60?'心动边缘':v>=35?'暗流涌动':v>=15?'略有好感':'陌生'}）`).join('<br>')}
+  <br><br>💗 能量值：${Math.round(G.energy)}／120 ${G.energy<25?'<span style="color:#ff8080">（能量告急！小心枯萎……）</span>':''}
+  <br>📌 关键事件：${Object.keys(G.flags).filter(k=>k.startsWith('ev_')).map(k=>k.slice(3)).join('、')||'暂无'}
+  <br><br>💡 输入「查询+人物名字」的彩蛋由选项④自由行动实现～
+  </div><div class="btnrow"><button onclick="closeOverlay();go('${n.next}')">继续</button></div>`);
+}
+
+/* ---------- R18 门 ---------- */
+function showR18Gate(n){
+  const p=$('#overlayPanel');
+  openOverlay(`<h2>🔞 R18 剧情确认</h2><div class="desc" style="text-align:center">接下来的章节包含成人向亲密剧情。<br>是否继续？</div>
+  <div class="btnrow"><button onclick="window._r18yes()">进入 R18 章节</button><button class="ghost" onclick="window._r18no()">跳过（走安全分支）</button></div>`);
+  window._r18yes=()=>{G.r18ok=true;closeOverlay();go(n.toR18);};
+  window._r18no=()=>{closeOverlay();go(n.toSafe);};
+}
+
+/* ---------- 结局 ---------- */
+function showEnding(n){
+  if(!G.seenEnds.includes(n.eid)){G.seenEnds.push(n.eid);localStorage.setItem('seenEnds',JSON.stringify(G.seenEnds));}
+  setBg(n.bg||'black');setChara(null);
+  save();
+  const p=$('#overlayPanel');
+  openOverlay(`<div class="endcard">
+    <div class="etype">${n.long?'—— 长 篇 结 局 ——':'—— 短 篇 结 局 ——'}</div>
+    <div class="ename">《${n.ename}》</div>
+    <div class="eno">END No.${n.eid} ／ 共14 · 已解锁 ${G.seenEnds.length}</div>
+    <div class="desc" style="text-align:left;margin-top:14px">${fmtText(n.text)}</div>
+    </div>
+    <div class="btnrow"><button onclick="closeOverlay();go('sys_back_title')">回到标题</button></div>`);
+  // 结局正文也写入 hist 供回看
+  G.hist.push({who:'【'+n.ename+'】',t:n.text});
+}
+
+/* ---------- 面板 ---------- */
+function openOverlay(html){$('#overlayPanel').innerHTML=html;$('#overlay').classList.add('show');}
+function closeOverlay(){$('#overlay').classList.remove('show');}
+window.closeOverlay=closeOverlay;window.go=go;
+
+function showTitle(){
+  $('#title').style.display='flex';
+  $('#ui').style.display='none';
+  $('#chara').classList.remove('show');
+  setBg('title',true);
+  $('#btnCont').style.display=localStorage.getItem('save1')?'':'none';
+}
+function startFromSave(){
+  const s=JSON.parse(localStorage.getItem('save1'));
+  Object.assign(G,{node:s.node,month:s.month,energy:s.energy,fav:s.fav,flags:s.flags,hist:s.hist||[],r18ok:s.r18ok});
+  $('#title').style.display='none';$('#ui').style.display='';
+  go(G.node);toast('已读取存档');
+}
+function newGame(){
+  bgmInit();
+  Object.assign(G,{node:'start',month:'序章',energy:100,fav:{jqn:10,zy:10,wx:5,syb:5,ly:5},flags:{},hist:[],r18ok:false});
+  $('#title').style.display='none';$('#ui').style.display='';
+  go('start');
+}
+
+/* ---------- 事件绑定 ---------- */
+$('#btnNew').onclick=()=>{ if(!localStorage.getItem('ageok')){ $('#ageGate').classList.add('show'); } else newGame(); };
+$('#ageYes').onclick=()=>{localStorage.setItem('ageok','1');$('#ageGate').classList.remove('show');newGame();};
+$('#ageNo').onclick=()=>{$('#ageGate').classList.remove('show');toast('本作品仅限18岁以上');};
+$('#btnCont').onclick=()=>{bgmInit();startFromSave();};
+$('#btnEnds').onclick=()=>{
+  const list=ENDINGS.map(e=>`<div style="padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.15)">${G.seenEnds.includes(e.id)?`<b style="color:var(--gold)">No.${e.id}《${e.name}》</b> <span style="color:var(--dim);font-size:12px">${e.long?'长篇':'短篇'}·${e.who}</span>`:`<span style="color:#5a4a66">No.${e.id} ？？？</span>`}</div>`).join('');
+  openOverlay(`<h2>结局图鉴（${G.seenEnds.length}/14）</h2><div class="desc">${list}</div><div class="btnrow"><button onclick="closeOverlay()">关闭</button></div>`);
+};
+$('#btnAbout').onclick=()=>openOverlay(`<h2>作品说明</h2><div class="desc">
+<b style="color:var(--gold)">《毕业后合租，我的舍友都是魅魔？！》</b><br>
+现代都市爽文·万人迷恋爱修罗场·女性向BG文字游戏<br><br>
+💗 你是刚毕业的小魅魔「冬淼」，穷得搬进星野花园601——却发现五个舍友全是魅魔！忠犬傲娇学长、小太阳白切黑博主、阴湿自卑便利店店员、圣人私心诊所医生、烂人真心的驻唱歌手……修罗场，开幕！<br><br>
+🎮 玩法：点击文本推进剧情｜点击<b>画面中央立绘区域</b>可隐藏全部界面欣赏完整立绘与背景，再次点击复原｜每月三个回合+月度小结｜每回合①②③为剧情选项，④为自由行动<br>
+💗 能量值过低会触发枯萎坏结局，吃饭、被喜爱、亲密互动都能回能<br>
+💾 进度自动保存；结局共 14 个（5长+9短），可在标题页查看图鉴<br>
+🎵 背景音乐由引擎实时合成（柔和环境乐），点击右上「🎵 音乐」可开关<br><br>
+⚠️ 本作品含 R18 章节（进入前会再次确认），18岁以下请勿游玩。
+</div><div class="btnrow"><button onclick="closeOverlay()">关闭</button></div>`);
+$('#btnMenu').onclick=(e)=>{e.stopPropagation();
+  openOverlay(`<h2>菜单</h2><div class="desc">当前：${G.month} ｜ 能量 ${Math.round(G.energy)} ｜ 节点 ${G.node}</div>
+  <div class="btnrow">
+    <button onclick="save();toast('已保存');closeOverlay()">保存进度</button>
+    <button class="ghost" onclick="showHistory()">历史记录</button>
+    <button class="ghost" onclick="closeOverlay();showTitle()">回到标题</button>
+    <button class="ghost" onclick="closeOverlay()">关闭</button>
+  </div>`);
+};
+function showHistory(){
+  const h=G.hist.slice(-30).map(x=>`<div class="h-item"><span class="h-who">${x.who}：</span>${x.t}</div>`).join('')||'（暂无）';
+  openOverlay(`<h2>历史记录</h2><div id="histList">${h}</div><div class="btnrow"><button onclick="closeOverlay()">关闭</button></div>`);
+}
+window.showHistory=showHistory;
+
+/* 点击文本框=推进；点击立绘区=隐藏/显示 UI */
+$('#dialog').onclick=(e)=>{e.stopPropagation();advance();};
+$('#textBody').onclick=(e)=>{e.stopPropagation();advance();};
+$('#textbox').onclick=(e)=>{e.stopPropagation();advance();};
+stage.addEventListener('click',()=>{
+  if($('#overlay').classList.contains('show'))return;
+  if(!G.hideUI){
+    /* 仅当当前为纯文本节点时允许隐藏UI欣赏立绘 */
+    const n=NODES[G.node];
+    if(n&&!n.type&&!($('#choices').style.display==='flex')){
+      G.hideUI=true;$('#ui').classList.add('hiddenUI');
+    }
+  }else{
+    G.hideUI=false;$('#ui').classList.remove('hiddenUI');
+  }
+});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){ if(G.hideUI){G.hideUI=false;$('#ui').classList.remove('hiddenUI');} else advance(); }
+});
+
+/* ===================== BGM（WebAudio 合成，离线可用） ===================== */
+const BGM={ctx:null,on:true,master:null,timer:null,step:0};
+function bgmInit(){
+  if(BGM.ctx)return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    BGM.ctx=new AC();
+    BGM.master=BGM.ctx.createGain();
+    BGM.master.gain.value=BGM.on?0.16:0;
+    BGM.master.connect(BGM.ctx.destination);
+    bgmLoop();
+  }catch(e){ /* 不支持音频则静默 */ }
+}
+function bgmNote(freq,t,dur,type,vol){
+  const o=BGM.ctx.createOscillator(),g=BGM.ctx.createGain();
+  const f=BGM.ctx.createBiquadFilter();
+  o.type=type||'triangle';o.frequency.value=freq;
+  f.type='lowpass';f.frequency.value=1300;
+  o.connect(f);f.connect(g);g.connect(BGM.master);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol||0.18,t+0.06);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur+0.06);
+}
+const BGM_SCALE=[261.63,293.66,329.63,392.00,440.00,523.25,587.33];
+const BGM_CHORDS=[[130.81,196.00,261.63],[146.83,220.00,293.66],[164.81,196.00,246.94],[130.81,174.61,261.63]];
+function bgmLoop(){
+  if(!BGM.ctx)return;
+  const t=BGM.ctx.currentTime+0.06;
+  const ch=BGM_CHORDS[(Math.floor(BGM.step/4))%BGM_CHORDS.length];
+  ch.forEach(f=>bgmNote(f,t,3.4,'sine',0.05));
+  for(let i=0;i<4;i++){
+    const fr=BGM_SCALE[(BGM.step+i*2)%BGM_SCALE.length];
+    bgmNote(fr,t+i*0.8,0.95,'triangle',0.05);
+  }
+  BGM.step+=4;
+  BGM.timer=setTimeout(bgmLoop,3200);
+}
+function bgmToggle(){
+  BGM.on=!BGM.on;
+  if(!BGM.ctx)bgmInit();
+  if(BGM.master)BGM.master.gain.value=BGM.on?0.16:0;
+  $('#btnMusic').textContent=BGM.on?'🎵 音乐':'🔇 静音';
+  if(BGM.ctx&&BGM.ctx.state==='suspended')BGM.ctx.resume();
+}
+$('#btnMusic').onclick=(e)=>{e.stopPropagation();bgmToggle();};
+
+/* ---------- 启动 ---------- */
+setBg('title',true);
+$('#title').style.display='flex';
+$('#ui').style.display='none';
+$('#btnCont').style.display=localStorage.getItem('save1')?'':'none';
+</script>
+</body>
+</html>
